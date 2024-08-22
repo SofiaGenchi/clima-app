@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clima</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #87CEFA, #FFFFFF); /* Cielo despejado con gradiente */
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative; /* Necesario para posicionar el elemento en la esquina */
+        }
+
+        #formulario {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            max-width: 600px; /* Ancho máximo para acomodar tres columnas */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #formulario h1 {
+            color: #0056b3;
+            margin-bottom: 20px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        #formulario input {
+            width: calc(100% - 22px);
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        #formulario button {
+            width: calc(100% - 22px);
+            padding: 12px;
+            background-color: #0056b3;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 auto;
+            display: block;
+        }
+
+        #formulario button:hover {
+            background-color: #004494;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            display: none; /* Oculta el div de resultados inicialmente */
+        }
+
+        #resultado_col {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr); /* Una columna por defecto */
+            gap: 10px; /* Espacio entre columnas */
+        }
+
+        #resultado p {
+            background-color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 8px 0;
+            font-size: 16px;
+            text-align: center; /* Centra el texto dentro de cada elemento */
+        }
+
+        /* Media query para pantallas grandes (tablets y computadoras) */
+        @media (min-width: 768px) {
+            #resultado_col {
+                grid-template-columns: repeat(2, 1fr); /* Dos columnas en pantallas más grandes */
+            }
+        }
+
+        /* Media query para pantallas muy grandes (computadoras de escritorio) */
+        @media (min-width: 1024px) {
+            #resultado_col {
+                grid-template-columns: repeat(3, 1fr); /* Tres columnas en pantallas muy grandes */
+            }
+        }
+
+        /* Estilo para la fecha y hora en la esquina superior derecha */
+        #fechaHora {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="fechaHora"></div> <!-- Elemento para mostrar la fecha y hora -->
+    <div id="formulario">
+        <h1>Consulta del Clima</h1>
+        <form id="formularioForm">
+            <input type="text" id="ciudad" placeholder="Ingresa la ciudad" required>
+            <button type="submit">Obtener Clima</button>
+        </form>
+        <div id="resultado">
+            <div id='resultado_col'>
+                <p id="ciudadNombre"></p>
+                <p id="temperatura"></p>
+                <p id="descripcion"></p>
+                <p id="humedad"></p>
+                <p id="velocidadViento"></p>
+                <p id="presionAtmosferica"></p>
+                <p id="visibilidad"></p>
+                <p id="indiceUV"></p>
+                <p id="lluvias"></p>
+                <p id="horaLluvias"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para actualizar la fecha y hora actual
+        function actualizarFechaHora() {
+            const fechaHora = new Date();
+            const opciones = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const fechaHoraFormateada = fechaHora.toLocaleString('es-ES', opciones);
+            document.getElementById('fechaHora').textContent = `Fecha y Hora: ${fechaHoraFormateada}`;
+        }
+
+        // Actualiza la fecha y hora al cargar la página
+        actualizarFechaHora();
+        setInterval(actualizarFechaHora, 1000); // Actualiza cada segundo
+
+        document.getElementById('formularioForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            // Oculta el resultado antes de la recarga
+            document.getElementById('resultado').style.display = 'none';
+
+            // Retraso de 2 segundos antes de recargar la página
+            setTimeout(() => {
+                const ciudad = document.getElementById('ciudad').value;
+                const queryString = new URLSearchParams({ ciudad }).toString();
+                window.location.href = `${window.location.pathname}?${queryString}`;
+            }, 2000);
+        });
+
+        // Muestra los resultados si hay parámetros en la URL
+        window.onload = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ciudad = urlParams.get('ciudad');
+
+            if (ciudad) {
+                const respuesta = await fetch(`/api/clima?ciudad=${ciudad}`);
+                const datos = await respuesta.json();
+
+                if (respuesta.ok) {
+                    document.getElementById('ciudadNombre').textContent = `Ciudad: ${datos.ciudad}`;
+                    document.getElementById('temperatura').textContent = `Temperatura: ${datos.temperatura}`;
+                    document.getElementById('descripcion').textContent = `Descripción: ${datos.descripcion}`;
+                    document.getElementById('humedad').textContent = `Humedad: ${datos.humedad}`;
+                    document.getElementById('velocidadViento').textContent = `Velocidad del viento: ${datos.velocidadViento}`;
+                    document.getElementById('presionAtmosferica').textContent = `Presión atmosférica: ${datos.presionAtmosferica}`;
+                    document.getElementById('visibilidad').textContent = `Visibilidad: ${datos.visibilidad}`;
+                    document.getElementById('indiceUV').textContent = `Índice UV: ${datos.indiceUV}`;
+                    document.getElementById('lluvias').textContent = `Probabilidad de lluvias: ${datos.lluvias}`;
+                    document.getElementById('horaLluvias').textContent = `Hora de la probabilidad de lluvia: ${datos.horaLluvias}`;
+                    
+                    // Muestra el div de resultados después de recibir los datos
+                    document.getElementById('resultado').style.display = 'grid';
+                } else {
+                    alert('Error: ' + datos.error);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
